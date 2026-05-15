@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Cinema Friend</title>
+    <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>body { background-color: #0B0D10; color: #F2F4F7; font-family: sans-serif; }</style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+        const API_URL = 'http://localhost:8080/api/v1';
+
+        function App() {
+            const [movies, setMovies] = useState([]);
+            const [selected, setSelected] = useState(null);
+            const [status, setStatus] = useState('');
+
+            useEffect(() => {
+                fetch(`${API_URL}/movies`)
+                    .then(r => r.json())
+                    .then(data => setMovies(data || []))
+                    .catch(e => console.error("Включи Go сервер!", e));
+            }, []);
+
+            const bookSeat = () => {
+                fetch(`${API_URL}/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ sessionId: "s1", row: 3, seat: Math.floor(Math.random() * 10) })
+                })
+                .then(r => r.json())
+                .then(d => setStatus(d.success ? `✅ Билет: ${d.ticketId}` : `❌ Ошибка: ${d.message}`));
+            };
+
+            if (selected) {
+                return (
+                    <div className="p-10 max-w-2xl mx-auto">
+                        <button onClick={() => {setSelected(null); setStatus('');}} className="mb-4 text-[#FFC20E]">← Назад</button>
+                        <h1 className="text-3xl font-bold mb-6">{selected.title}</h1>
+                        <img src={selected.imageUrl} className="w-full h-64 object-cover rounded-xl mb-6" />
+                        <button onClick={bookSeat} className="w-full bg-[#FFC20E] text-black font-bold py-3 rounded-xl hover:bg-yellow-500">
+                            Купить билет
+                        </button>
+                        {status && <div className="mt-4 p-4 bg-gray-800 rounded">{status}</div>}
+                    </div>
+                );
+            }
+
+            return (
+                <div className="p-10">
+                    <h1 className="text-3xl font-bold mb-8 text-[#FFC20E]">Афиша Cinema Friend</h1>
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                        {movies.map(m => (
+                            <div key={m.id} onClick={() => setSelected(m)} className="cursor-pointer bg-[#12151B] p-4 rounded-xl border border-gray-800 hover:border-[#FFC20E]">
+                                <img src={m.imageUrl} className="w-full h-48 object-cover rounded mb-4" />
+                                <h3 className="font-bold">{m.title}</h3>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
